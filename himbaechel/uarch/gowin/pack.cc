@@ -3,6 +3,7 @@
 #include "design_utils.h"
 #include "log.h"
 #include "nextpnr.h"
+#include "util.h"
 
 #define HIMBAECHEL_CONSTIDS "uarch/gowin/constids.inc"
 #include "himbaechel_constids.h"
@@ -159,8 +160,26 @@ void GowinPacker::pack_pll(void)
     for (auto &cell : ctx->cells) {
         auto &ci = *cell.second;
 
-        if (ci.type.in(id_rPLL, id_PLLVR, id_PLLA)) {
+        if (ci.type.in(id_rPLL, id_PLLVR, id_PLLA, id_PLLO)) {
             gwu.remove_brackets(&ci);
+
+            if (ci.type == id_PLLO) {
+                // Like the IDE, leave out the inputs that the parameters do not select
+                // and a feedback input that is tied to a constant.
+                NetInfo *fb_net = ci.getPort(id_CLKFB);
+                if (str_or_default(ci.params, id_CLKFB_SEL, "INTERNAL") != "EXTERNAL" ||
+                    (fb_net && fb_net->name.in(ctx->id("$PACKER_GND"), ctx->id("$PACKER_VCC")))) {
+                    ci.disconnectPort(id_CLKFB);
+                }
+                for (auto dyn :
+                     {std::make_pair("DYN_IDIV_SEL", "IDSEL"), std::make_pair("DYN_FBDIV_SEL", "FBDSEL")}) {
+                    if (str_or_default(ci.params, ctx->id(dyn.first), "FALSE") != "TRUE") {
+                        for (int i = 0; i < 6; ++i) {
+                            ci.disconnectPort(ctx->idf("%s%d", dyn.second, i));
+                        }
+                    }
+                }
+            }
 
             // If CLKIN is connected to a special pin, then it makes sense
             // to try to place the PLL so that it uses a direct connection

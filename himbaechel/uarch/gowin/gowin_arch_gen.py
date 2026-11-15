@@ -1776,10 +1776,13 @@ def create_pll_tiletype(chip: Chip, db: chipdb, x: int, y: int, ttyp: int, tdesc
     tt.extra_data = TileExtraData(chip.strs.id(typename))
 
     # wires
-    pll_outputs = {'CLKOUT', 'LOCK', 'CLKOUTP', 'CLKOUTD', 'CLKOUTD3'}
+    pll_outputs = {'CLKOUT', 'LOCK', 'CLKOUTP', 'CLKOUTD', 'CLKOUTD3', 'CLKOUTA', 'CLKOUTB', 'CLKOUTC'}
     if chip.name == 'GW1NS-4':
         pll_name = 'PLLVR'
         bel_type = 'PLLVR'
+    elif chip.name == 'GW1N-2':
+        pll_name = 'PLLO'
+        bel_type = 'PLLO'
     else:
         pll_name = 'RPLLA'
         bel_type = 'rPLL'
