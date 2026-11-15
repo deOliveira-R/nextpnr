@@ -1249,7 +1249,7 @@ def create_io_tiletype(chip: Chip, db: chipdb, x: int, y: int, ttyp: int, tdesc:
     tt = chip.create_tile_type(tiletype)
     tt.extra_data = TileExtraData(chip.strs.id(typename))
 
-    simple_io = y in db.simplio_rows and chip.name in {'GW1N-1', 'GW1NZ-1', 'GW1N-4'}
+    simple_io = y in db.simplio_rows and chip.name in {'GW1N-1', 'GW1NZ-1', 'GW1N-2', 'GW1N-4'}
     if simple_io:
         rng = 10
     else:
@@ -1783,6 +1783,9 @@ def create_pll_tiletype(chip: Chip, db: chipdb, x: int, y: int, ttyp: int, tdesc
     else:
         pll_name = 'RPLLA'
         bel_type = 'rPLL'
+    if pll_name not in db[y, x].bels:
+        tdesc.tiletype = tiletype
+        return tt
     portmap = db[y, x].bels[pll_name].portmap
     pll = tt.create_bel("PLL", bel_type, z = PLL_Z)
     pll.flags = BEL_FLAG_GLOBAL
